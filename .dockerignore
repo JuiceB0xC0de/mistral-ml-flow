@@ -1,0 +1,13 @@
+.git
+.github
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.pytest_cache
+data/
+rollcache/
+checkpoints/
+*.tar.gz
+*.log
+.env
