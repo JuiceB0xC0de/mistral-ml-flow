@@ -1,13 +1,44 @@
 # ML-workflow-image
 
-One-size-fits-all ML GPU Docker image for RunPod — training, fine-tuning,
-LoRA/QLoRA quantization, interpretability/SAE work, data science, and local
-GGUF inference via llama.cpp. Built by GitHub Actions, pushed to Docker Hub.
+[![Docker Image CI](https://github.com/JuiceB0xC0de/ML-workflow-image/actions/workflows/docker.yml/badge.svg)](https://github.com/JuiceB0xC0de/ML-workflow-image/actions/workflows/docker.yml)
+[![Docker Pulls](https://img.shields.io/docker/pulls/juiceboxdocks/ml-workflow-image)](https://hub.docker.com/r/juiceboxdocks/ml-workflow-image)
+[![HF Wheel](https://img.shields.io/badge/HF%20Wheel-juiceb0xc0de%2Fllama--cpp--cu128--wheel-blue)](https://huggingface.co/juiceb0xc0de/llama-cpp-cu128-wheel)
+
+A pre-built CUDA 12.8 ML GPU image for RunPod and any Docker host with an NVIDIA GPU. Pull it, mount your code/data, and train/fine-tune/evaluate/serve without waiting for conda or compiling llama.cpp from source.
+
+```bash
+docker pull juiceboxdocks/ml-workflow-image:latest
+
+# Run an interactive shell with all GPUs
+docker run --rm -it --gpus all \
+  -e HF_TOKEN=$HF_TOKEN \
+  -e WANDB_API_KEY=$WANDB_API_KEY \
+  juiceboxdocks/ml-workflow-image:latest
+
+# One-shot smoke test
+docker run --rm --gpus all juiceboxdocks/ml-workflow-image:latest \
+  bash -c "llama-cli --version && python -c 'import torch, flash_attn; print(torch.__version__, torch.cuda.is_available())'"
+```
+
+## What it's for
+
+- Fine-tuning LLMs: full FT, LoRA/QLoRA (`peft` + `bitsandbytes`)
+- RLHF / DPO / PPO (`trl`)
+- Mechanistic interpretability (`transformer-lens`, `sae-lens`)
+- SAE training and feature analysis
+- Local GGUF inference and quantization (`llama.cpp` binaries)
+- Dataset wrangling, W&B logging, Jupyter exploration, pytest CI
+
+## Image tags
+
+| Tag | Use |
+|---|---|
+| `juiceboxdocks/ml-workflow-image:latest` | Latest build |
+| `juiceboxdocks/ml-workflow-image:cu128` | Pinned CUDA 12.8 build |
 
 ## Anchor & compatibility
 
-The image is **anchored on a prebuilt flash-attn wheel** so nothing slow has to
-compile, which locks the stack:
+The image is **anchored on a prebuilt flash-attn wheel** so nothing slow has to compile, which locks the stack:
 
 | | |
 |---|---|
@@ -15,13 +46,56 @@ compile, which locks the stack:
 | Python | 3.10 |
 | torch | 2.4.0 (pip wheel, cu121) |
 | CUDA runtime | 12.8.1 (host driver must be CUDA 12.0+) |
+| Base image | `nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04` |
 
-**GPU coverage:** Ampere `sm_80` · Ada `sm_89` · Hopper
-`sm_90`
+**GPU coverage:** Ampere `sm_80` (A100) · Ada `sm_89` (RTX 6000 Ada) · Hopper `sm_90` (H100).
+**Not covered:** Blackwell `sm_100` / `sm_120` — would need a cu130 build.
 
-***
+## What's installed
 
-## Ampere Architecture (2020–2022)
+torch/torchvision/torchaudio · xformers · flash-attn · transformers · accelerate
+· datasets · peft · trl · bitsandbytes (LoRA/QLoRA) · transformer-lens · sae-lens
+· huggingface_hub + hf_transfer · wandb · tensorboard · boto3 · rclone · llama.cpp
+binaries (`llama-cli`/`llama-server`/`llama-quantize`/`llama-embedding`) compiled
+for CUDA 12.8 + sm_80 · Jupyter · pytest · pandas · scipy · scikit-learn ·
+matplotlib · seaborn · umap-learn · einops · rich · tqdm.
+
+**Intentionally excluded:** DeepSpeed, autoawq, gptqmodel, unsloth, llama-cpp-python.
+
+The image ships the official `llama.cpp` binaries directly because building
+`llama-cpp-python` from source in GitHub Actions is slow and unreliable. If you
+need the Python binding, install it at runtime.
+
+## Build
+
+GitHub Actions builds on push to `main` (or via **Run workflow**) and pushes:
+- `juiceboxdocks/ml-workflow-image:cu128`
+- `juiceboxdocks/ml-workflow-image:latest`
+
+### Required repo secrets (Settings → Secrets → Actions)
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+
+## RunPod
+
+- **Image:** `juiceboxdocks/ml-workflow-image:latest`
+- **GPU:** A100 / H100 / RTX 6000 Ada
+- **Env:** `HF_TOKEN`, `WANDB_API_KEY`, plus `B2_ACCOUNT` / `B2_KEY` / `B2_BUCKET` for `scripts/sync_pools.sh`
+- **Network volume:** optional; keep hot data local and archive pool batches to B2.
+
+## Smoke test
+
+```bash
+pip check && python -c "import torch, flash_attn, transformers, peft, trl, \
+transformer_lens, sae_lens, bitsandbytes; print('imports OK', torch.__version__)"
+llama-cli --version
+```
+
+## GPU reference
+
+See below for architecture specs. This image is built for **Ampere / Ada / Hopper** (`sm_80`, `sm_89`, `sm_90`). Blackwell is not supported by this tag.
+
+### Ampere Architecture (2020–2022)
 
 3rd-gen Tensor Cores · TF32/BF16/INT8 · NVLink 3.0 (600 GB/s) · MIG on A100/A30 · Structural 2:4 sparsity
 
@@ -40,9 +114,7 @@ compile, which locks the stack:
 | RTX 3090 | 24 GB | GDDR6X | 936 GB/s | 10,496 | 328 | 350W | 35.6 | — | — | ❌ |
 | RTX 3080 | 10 GB | GDDR6X | 760 GB/s | 8,704 | 272 | 320W | 29.8 | — | — | ❌ |
 
-***
-
-## Ada Lovelace Architecture (2022–2023)
+### Ada Lovelace Architecture (2022–2023)
 
 4th-gen Tensor Cores · Native FP8 (L-series pro) · DLSS 3 · 3rd-gen RT Cores · AV1 encode/decode
 
@@ -64,9 +136,9 @@ compile, which locks the stack:
 | RTX PRO 6000 | 96 GB | GDDR7 | ~960 GB/s | 18,176 | 568 | 300W | ~125 | — | ❌ |
 | RTX PRO 6000 WK | 96 GB | GDDR7 | ~960 GB/s | 18,176 | 568 | 300W | ~125 | — | ❌ |
 
-***
+> ⚠️ Ada PRO GDDR7 specs are partially pre-release estimates. Verify with NVIDIA datacenter docs before production use.
 
-## Hopper Architecture (2022–2023)
+### Hopper Architecture (2022–2023)
 
 Transformer Engine (auto FP8↔FP16) · 4th-gen Tensor Cores · NVLink 4.0 (900 GB/s) · HBM3/HBM3e · MIG
 
@@ -78,13 +150,7 @@ Transformer Engine (auto FP8↔FP16) · 4th-gen Tensor Cores · NVLink 4.0 (900 
 | H200 SXM | 141 GB | HBM3e | 4,800 GB/s | 16,896 | 528 | 700W | 989 | 1,979 | 900 GB/s | ✅ Up to 7 |
 | H200 NVL | 143 GB | HBM3e | 4,800 GB/s | 16,896 | 528 | 700W | 989 | 1,979 | 900 GB/s | ✅ Up to 7 |
 
-***
-
-**Not covered:** Blackwell — `sm_100`,
-
-***
-
-## Blackwell Architecture (2024–2025)
+### Blackwell Architecture (2024–2025)
 
 5th-gen Tensor Cores · FP4 support · NVLink 5.0 · HBM3e · GB200 NVL72 rack-scale design
 
@@ -93,45 +159,4 @@ Transformer Engine (auto FP8↔FP16) · 4th-gen Tensor Cores · NVLink 4.0 (900 
 | B200 | 180 GB | HBM3e | 8,000 GB/s | 20,480 | 1,000W | 2,250 | 4,500 | 9,000 | ✅ |
 | B300 | 288 GB | HBM3e | 16,000 GB/s | 20,480 | 1,200W | 2,500 | 5,000 | 10,000 | ✅ |
 
-> ⚠️ Blackwell specs are partially pre-release estimates. Verify with NVIDIA datacenter docs before production use.
-
-***
-
-Base is `nvidia/cuda:12.8.1-cudnn9-runtime-ubuntu22.04` plus pip torch (NOT an
-NGC image) because the `cxx11abiFALSE` wheel matches PyPI torch's ABI, not
-NGC's.
-
-## What's installed
-
-torch/torchvision/torchaudio · xformers · flash-attn · transformers · accelerate
-· datasets · peft · trl · bitsandbytes (LoRA/QLoRA) · transformer-lens · sae-lens
-· huggingface_hub + hf_transfer · wandb · tensorboard · boto3 · llama.cpp binaries
-(`llama-cli`/`llama-server`/`llama-quantize`/`llama-embedding`) compiled for CUDA
-12.8 + sm_80 · the usual data-science + Jupyter + pytest stack.
-
-**Intentionally excluded:** DeepSpeed, autoawq, gptqmodel, unsloth.
-
-## Build
-
-GitHub Actions builds on push to `main` (or via **Run workflow**) and pushes:
-- `juiceboxdocks/ml-workflow-image:cu128`
-- `juiceboxdocks/ml-workflow-image:latest`
-
-### Required repo secrets (Settings → Secrets → Actions)
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN` (Docker Hub → Account → Security → New Access Token)
-
-## RunPod
-
-- **Image:** `juiceboxdocks/ml-workflow-image:latest`
-- **GPU:** A100 / H100 / RTX 6000 Ada
-- **Env:** `HF_TOKEN`, `WANDB_API_KEY`, plus `B2_ACCOUNT` / `B2_KEY` / `B2_BUCKET`
-  for `sync_pools`.
-
-## Smoke test
-
-```bash
-pip check && python -c "import torch, flash_attn, transformers, peft, trl, \
-transformer_lens, sae_lens, bitsandbytes; print('imports OK', torch.__version__)"
-llama-cli --version
-```
+> ⚠️ Blackwell specs are partially pre-release estimates. This image does **not** support Blackwell. Build a cu130 variant if you need it.
