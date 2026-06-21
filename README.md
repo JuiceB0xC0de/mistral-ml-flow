@@ -14,31 +14,31 @@ compile, which locks the stack:
 | flash-attn | `2.8.3.post1 +cu12 torch2.4 cxx11abiFALSE cp310` (prebuilt) |
 | Python | 3.10 |
 | torch | 2.4.0 (pip wheel, cu121) |
-| CUDA | 12.x |
+| CUDA runtime | 12.8.1 (host driver must be CUDA 12.0+) |
 
 **GPU coverage:** Ampere `sm_80` (A100) · Ada `sm_89` (RTX 6000 Ada) · Hopper
 `sm_90` (H100).
-**Not covered:** Blackwell — B200 `sm_100`, RTX Pro 6000 Blackwell `sm_120`
-(would require CUDA 12.8+ / a cu130 build). If you need Blackwell, this image
-won't run there.
+**Not covered:** Blackwell — B200 `sm_100`, RTX Pro 6000 Blackwell `sm_120`.
 
-Base is a plain `nvidia/cuda:12.1.1-cudnn8-devel` + pip torch (NOT an NGC image)
-because the `cxx11abiFALSE` wheel matches PyPI torch's ABI, not NGC's.
+Base is `nvidia/cuda:12.8.1-cudnn9-runtime-ubuntu22.04` plus pip torch (NOT an
+NGC image) because the `cxx11abiFALSE` wheel matches PyPI torch's ABI, not
+NGC's.
 
 ## What's installed
 
 torch/torchvision/torchaudio · xformers · flash-attn · transformers · accelerate
 · datasets · peft · trl · bitsandbytes (LoRA/QLoRA) · transformer-lens · sae-lens
 · huggingface_hub + hf_transfer · wandb · tensorboard · boto3 · llama.cpp binaries
-(`llama-cli`/`server`/`quantize`/`embedding`/`gguf`) · llama-cpp-python (CUDA) ·
-the usual data-science + Jupyter + pytest stack.
+(`llama-cli`/`llama-server`/`llama-quantize`/`llama-embedding`) compiled for CUDA
+12.8 + sm_80 · llama-cpp-python (CUDA) · the usual data-science + Jupyter +
+pytest stack.
 
 **Intentionally excluded:** DeepSpeed, autoawq, gptqmodel, unsloth.
 
 ## Build
 
 GitHub Actions builds on push to `main` (or via **Run workflow**) and pushes:
-- `juiceboxdocks/ml-workflow-image:cu121`
+- `juiceboxdocks/ml-workflow-image:cu128`
 - `juiceboxdocks/ml-workflow-image:latest`
 
 ### Required repo secrets (Settings → Secrets → Actions)

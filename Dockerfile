@@ -6,13 +6,40 @@
 # Does NOT cover Blackwell: B200 sm_100, RTX Pro 6000 sm_120
 ###############################################################################
 
-# Stage 1: prebuilt llama.cpp CUDA binaries (swap in your own HF-compiled ones if you prefer)
-FROM ghcr.io/ggml-org/llama.cpp:full-cuda AS llamacpp
+# Stage 1: prebuilt llama.cpp CUDA binaries compiled on CUDA 12.8 for sm_80 (A100)
+# Built in HF Space juiceb0xc0de/llama.cpp-cu12.8-sm_80 and stored as a wheel/repo.
+FROM nvidia/cuda:12.8.1-cudnn9-runtime-ubuntu22.04 AS llamacpp
+ARG HF_WHEEL_REPO="juiceb0xc0de/llama-cpp-cu128-wheel"
+
+# install only what's needed to fetch the binaries
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      curl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/llama.cpp
+
+# Pull every binary + shared lib from the HF wheel repo.
+# (symlinks were flattened on upload; the versioned .so names are the real files).
+RUN curl -fsSL -o libggml-base.so.0.15.2           "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libggml-base.so.0.15.2" && \
+    curl -fsSL -o libggml-cpu.so.0.15.2            "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libggml-cpu.so.0.15.2" && \
+    curl -fsSL -o libggml-cuda.so.0.15.2           "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libggml-cuda.so.0.15.2" && \
+    curl -fsSL -o libggml.so.0.15.2                "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libggml.so.0.15.2" && \
+    curl -fsSL -o libllama-cli-impl.so             "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libllama-cli-impl.so" && \
+    curl -fsSL -o libllama-common.so.0.0.1         "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libllama-common.so.0.0.1" && \
+    curl -fsSL -o libllama-quantize-impl.so        "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libllama-quantize-impl.so" && \
+    curl -fsSL -o libllama-server-impl.so          "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libllama-server-impl.so" && \
+    curl -fsSL -o libllama.so.0.0.1                "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libllama.so.0.0.1" && \
+    curl -fsSL -o libmtmd.so.0.0.1                 "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libmtmd.so.0.0.1" && \
+    curl -fsSL -o llama-cli                        "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/llama-cli" && \
+    curl -fsSL -o llama-embedding                  "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/llama-embedding" && \
+    curl -fsSL -o llama-quantize                   "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/llama-quantize" && \
+    curl -fsSL -o llama-server                     "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/llama-server" && \
+    chmod +x llama-cli llama-embedding llama-quantize llama-server
 
 # Stage 2: main image
-# CUDA 12.8.1 to match the ggml-org llama.cpp:full-cuda binaries (built on 12.8.1);
-# still cu12 — torch 2.4 / the flash-attn wheel use torch's own bundled CUDA.
-FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04
+# CUDA 12.8.1 runtime matches the precompiled llama.cpp binaries (built on 12.8).
+# torch 2.4 / the flash-attn wheel use torch's own bundled CUDA (cu121), which is fine on a 12.8 host.
+FROM nvidia/cuda:12.8.1-cudnn9-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -29,9 +56,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/* \
  && python3 -m pip install --upgrade pip setuptools wheel packaging
 
-# llama.cpp: ggml-org's prebuilt CUDA binaries + their .so libs both live in /app.
-# Copy the whole dir; expose on PATH (binaries) and LD_LIBRARY_PATH (libllama/libggml).
-COPY --from=llamacpp /app /opt/llama.cpp
+# llama.cpp: copy precompiled binaries + shared libs; expose on PATH and LD_LIBRARY_PATH.
+COPY --from=llamacpp /opt/llama.cpp /opt/llama.cpp
 ENV PATH="/opt/llama.cpp:${PATH}" \
     LD_LIBRARY_PATH="/opt/llama.cpp:${LD_LIBRARY_PATH}"
 

@@ -40,7 +40,7 @@ jobs:
           context: .
           push: true
           tags: |
-            juiceboxdocks/ml-workflow-image:cu121
+            juiceboxdocks/ml-workflow-image:cu128
             juiceboxdocks/ml-workflow-image:latest
           # No gha cache: mode=max ~doubles peak disk by materializing every
           # layer for export, which OOM'd the runner on this ~20GB CUDA image.
