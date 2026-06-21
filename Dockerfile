@@ -10,7 +10,9 @@
 FROM ghcr.io/ggml-org/llama.cpp:full-cuda AS llamacpp
 
 # Stage 2: main image
-FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
+# CUDA 12.8.1 to match the ggml-org llama.cpp:full-cuda binaries (built on 12.8.1);
+# still cu12 — torch 2.4 / the flash-attn wheel use torch's own bundled CUDA.
+FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -27,10 +29,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/* \
  && python3 -m pip install --upgrade pip setuptools wheel packaging
 
-# llama.cpp binaries
-RUN mkdir -p /opt/llama.cpp
-COPY --from=llamacpp /llama-cli /llama-server /llama-quantize /llama-embedding /llama-gguf /opt/llama.cpp/
-ENV PATH="/opt/llama.cpp:${PATH}"
+# llama.cpp: ggml-org's prebuilt CUDA binaries + their .so libs both live in /app.
+# Copy the whole dir; expose on PATH (binaries) and LD_LIBRARY_PATH (libllama/libggml).
+COPY --from=llamacpp /app /opt/llama.cpp
+ENV PATH="/opt/llama.cpp:${PATH}" \
+    LD_LIBRARY_PATH="/opt/llama.cpp:${LD_LIBRARY_PATH}"
 
 WORKDIR /workspace
 
