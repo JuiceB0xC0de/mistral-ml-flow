@@ -95,9 +95,12 @@ RUN pip install \
       scipy pandas scikit-learn matplotlib seaborn umap-learn einops \
       tqdm rich jaxtyping jupyter ipywidgets pytest pytest-cov
 
-# ── llama-cpp-python (CUDA; Ampere/Ada/Hopper only) ──
-RUN CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=80;86;89;90" FORCE_CMAKE=1 \
-      pip install llama-cpp-python
+# ── llama-cpp-python intentionally NOT installed ──
+# The image already ships the official llama.cpp CUDA binaries (llama-cli,
+# llama-server, llama-quantize, llama-embedding) compiled for CUDA 12.8 sm_80.
+# Building llama-cpp-python from source in GHA is slow/unreliable and adds a
+# second llama.cpp backend. Use the native binaries or install the Python
+# binding at runtime if you need it.
 
 # DeepSpeed / autoawq / gptqmodel / unsloth: intentionally NOT installed.
 

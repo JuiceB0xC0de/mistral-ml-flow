@@ -30,8 +30,7 @@ torch/torchvision/torchaudio · xformers · flash-attn · transformers · accele
 · datasets · peft · trl · bitsandbytes (LoRA/QLoRA) · transformer-lens · sae-lens
 · huggingface_hub + hf_transfer · wandb · tensorboard · boto3 · llama.cpp binaries
 (`llama-cli`/`llama-server`/`llama-quantize`/`llama-embedding`) compiled for CUDA
-12.8 + sm_80 · llama-cpp-python (CUDA) · the usual data-science + Jupyter +
-pytest stack.
+12.8 + sm_80 · the usual data-science + Jupyter + pytest stack.
 
 **Intentionally excluded:** DeepSpeed, autoawq, gptqmodel, unsloth.
 
