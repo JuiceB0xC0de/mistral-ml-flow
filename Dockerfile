@@ -8,7 +8,7 @@
 
 # Stage 1: prebuilt llama.cpp CUDA binaries compiled on CUDA 12.8 for sm_80 (A100)
 # Built in HF Space juiceb0xc0de/llama.cpp-cu12.8-sm_80 and stored as a wheel/repo.
-FROM nvidia/cuda:12.8.1-cudnn9-runtime-ubuntu22.04 AS llamacpp
+FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04 AS llamacpp
 ARG HF_WHEEL_REPO="juiceb0xc0de/llama-cpp-cu128-wheel"
 
 # install only what's needed to fetch the binaries
@@ -39,7 +39,7 @@ RUN curl -fsSL -o libggml-base.so.0.15.2           "https://huggingface.co/space
 # Stage 2: main image
 # CUDA 12.8.1 runtime matches the precompiled llama.cpp binaries (built on 12.8).
 # torch 2.4 / the flash-attn wheel use torch's own bundled CUDA (cu121), which is fine on a 12.8 host.
-FROM nvidia/cuda:12.8.1-cudnn9-runtime-ubuntu22.04
+FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
