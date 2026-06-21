@@ -7,7 +7,7 @@
 ###############################################################################
 
 # Stage 1: prebuilt llama.cpp CUDA binaries compiled on CUDA 12.8 for sm_80 (A100)
-# Built in HF Space juiceb0xc0de/llama.cpp-cu12.8-sm_80 and stored as a wheel/repo.
+# Built in HF Space juiceb0xc0de/llama.cpp-cu12.8-sm_80 and stored in HF model repo.
 FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04 AS llamacpp
 ARG HF_WHEEL_REPO="juiceb0xc0de/llama-cpp-cu128-wheel"
 
@@ -18,22 +18,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /opt/llama.cpp
 
-# Pull every binary + shared lib from the HF wheel repo.
+# Pull every binary + shared lib from the HF model repo.
 # (symlinks were flattened on upload; the versioned .so names are the real files).
-RUN curl -fsSL -o libggml-base.so.0.15.2           "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libggml-base.so.0.15.2" && \
-    curl -fsSL -o libggml-cpu.so.0.15.2            "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libggml-cpu.so.0.15.2" && \
-    curl -fsSL -o libggml-cuda.so.0.15.2           "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libggml-cuda.so.0.15.2" && \
-    curl -fsSL -o libggml.so.0.15.2                "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libggml.so.0.15.2" && \
-    curl -fsSL -o libllama-cli-impl.so             "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libllama-cli-impl.so" && \
-    curl -fsSL -o libllama-common.so.0.0.1         "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libllama-common.so.0.0.1" && \
-    curl -fsSL -o libllama-quantize-impl.so        "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libllama-quantize-impl.so" && \
-    curl -fsSL -o libllama-server-impl.so          "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libllama-server-impl.so" && \
-    curl -fsSL -o libllama.so.0.0.1                "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libllama.so.0.0.1" && \
-    curl -fsSL -o libmtmd.so.0.0.1                 "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/libmtmd.so.0.0.1" && \
-    curl -fsSL -o llama-cli                        "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/llama-cli" && \
-    curl -fsSL -o llama-embedding                  "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/llama-embedding" && \
-    curl -fsSL -o llama-quantize                   "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/llama-quantize" && \
-    curl -fsSL -o llama-server                     "https://huggingface.co/spaces/${HF_WHEEL_REPO}/resolve/main/bin/llama-server" && \
+RUN curl -fsSL -o libggml-base.so.0.15.2           "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/libggml-base.so.0.15.2" && \
+    curl -fsSL -o libggml-cpu.so.0.15.2            "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/libggml-cpu.so.0.15.2" && \
+    curl -fsSL -o libggml-cuda.so.0.15.2           "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/libggml-cuda.so.0.15.2" && \
+    curl -fsSL -o libggml.so.0.15.2                "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/libggml.so.0.15.2" && \
+    curl -fsSL -o libllama-cli-impl.so             "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/libllama-cli-impl.so" && \
+    curl -fsSL -o libllama-common.so.0.0.1         "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/libllama-common.so.0.0.1" && \
+    curl -fsSL -o libllama-quantize-impl.so        "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/libllama-quantize-impl.so" && \
+    curl -fsSL -o libllama-server-impl.so          "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/libllama-server-impl.so" && \
+    curl -fsSL -o libllama.so.0.0.1                "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/libllama.so.0.0.1" && \
+    curl -fsSL -o libmtmd.so.0.0.1                 "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/libmtmd.so.0.0.1" && \
+    curl -fsSL -o llama-cli                        "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/llama-cli" && \
+    curl -fsSL -o llama-embedding                  "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/llama-embedding" && \
+    curl -fsSL -o llama-quantize                   "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/llama-quantize" && \
+    curl -fsSL -o llama-server                     "https://huggingface.co/${HF_WHEEL_REPO}/resolve/main/bin/llama-server" && \
     chmod +x llama-cli llama-embedding llama-quantize llama-server
 
 # Stage 2: main image
