@@ -38,8 +38,8 @@ the usual data-science + Jupyter + pytest stack.
 ## Build
 
 GitHub Actions builds on push to `main` (or via **Run workflow**) and pushes:
-- `juiceb0xc0de/ml-workflow-image:cu121`
-- `juiceb0xc0de/ml-workflow-image:latest`
+- `juiceboxdocks/ml-workflow-image:cu121`
+- `juiceboxdocks/ml-workflow-image:latest`
 
 ### Required repo secrets (Settings → Secrets → Actions)
 - `DOCKERHUB_USERNAME`
@@ -47,7 +47,7 @@ GitHub Actions builds on push to `main` (or via **Run workflow**) and pushes:
 
 ## RunPod
 
-- **Image:** `juiceb0xc0de/ml-workflow-image:latest`
+- **Image:** `juiceboxdocks/ml-workflow-image:latest`
 - **GPU:** A100 / H100 / RTX 6000 Ada
 - **Env:** `HF_TOKEN`, `WANDB_API_KEY`, plus `B2_ACCOUNT` / `B2_KEY` / `B2_BUCKET`
   for `sync_pools`.

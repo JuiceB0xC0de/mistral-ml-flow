@@ -40,7 +40,7 @@ jobs:
           context: .
           push: true
           tags: |
-            juiceb0xc0de/ml-workflow-image:cu121
-            juiceb0xc0de/ml-workflow-image:latest
+            juiceboxdocks/ml-workflow-image:cu121
+            juiceboxdocks/ml-workflow-image:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
