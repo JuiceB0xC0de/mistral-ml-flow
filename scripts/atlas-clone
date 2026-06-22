@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOURCE="${1:-https://huggingface.co/spaces/juiceb0xc0de/atlasing}"
+TARGET="${2:-/workspace/atlasing}"
+
+git_with_hf_auth() {
+  if [ -n "${HF_TOKEN:-}" ]; then
+    git -c "http.extraHeader=Authorization: Bearer ${HF_TOKEN}" "$@"
+  else
+    git "$@"
+  fi
+}
+
+if [ -d "${TARGET}/.git" ]; then
+  echo "[atlas-clone] refreshing ${TARGET}"
+  git_with_hf_auth -C "${TARGET}" pull --ff-only
+else
+  echo "[atlas-clone] cloning ${SOURCE} -> ${TARGET}"
+  rm -rf "${TARGET}"
+  git_with_hf_auth clone "${SOURCE}" "${TARGET}"
+fi

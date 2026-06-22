@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${ATLAS_APP_DIR:-/workspace/atlasing}"
+
+if [ ! -f "${APP_DIR}/app.py" ]; then
+  echo "[atlas-run-vibethinker] ${APP_DIR}/app.py not found. Run atlas-clone first." >&2
+  exit 1
+fi
+
+exec python "${APP_DIR}/app.py" \
+  --model WeiboAI/VibeThinker-3B \
+  --corpus /workspace/prompts/prompts.jsonl \
+  --outdir /workspace/outputs/vibethinker-3b-census \
+  --atlas /workspace/atlas/vibethinker-3b \
+  --batch-size "${ATLAS_BATCH_SIZE:-8}" \
+  --max-length "${ATLAS_MAX_LENGTH:-128}" \
+  --components "${ATLAS_COMPONENTS:-mlp,gate,up}" \
+  "$@"
