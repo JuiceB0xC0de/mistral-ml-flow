@@ -65,7 +65,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # llama.cpp: copy precompiled binaries + shared libs; expose on PATH and LD_LIBRARY_PATH.
 COPY --from=llamacpp /opt/llama.cpp /opt/llama.cpp
 ENV PATH="/opt/llama.cpp:${PATH}" \
-    LD_LIBRARY_PATH="/opt/llama.cpp:${LD_LIBRARY_PATH}"
+    LD_LIBRARY_PATH="/opt/llama.cpp:${LD_LIBRARY_PATH:-}"
 
 WORKDIR /workspace
 
@@ -83,16 +83,19 @@ RUN pip install --no-build-isolation \
 RUN pip install \
       "numpy<2" \
       "transformers==4.46.3" \
-      "accelerate>=0.34,<1.1" \
+      "accelerate>=0.34" \
       "datasets>=2.20,<3.2" \
       tokenizers "sentencepiece>=0.2.0" tiktoken "protobuf>=3.20.0" \
-      "peft>=0.12,<0.14" "trl>=0.11,<0.13"
+      "peft>=0.12,<0.14" "trl>=0.12,<0.13"
 
 # ── Quantization (LoRA/QLoRA) ──
-RUN pip install "bitsandbytes>=0.44"
+# CUDA 12.8 backend only present in bitsandbytes 0.45.3+
+RUN pip install "bitsandbytes>=0.45.3"
 
 # ── Interpretability / SAE ──
-RUN pip install transformer-lens sae-lens
+# transformer-lens / sae-lens have loose torch pins; guard against downgrade.
+RUN pip install transformer-lens sae-lens \
+ && python -c "import torch; assert torch.__version__.startswith('2.4'), f'torch downgraded: {torch.__version__}'"
 
 # ── Hub / logging / storage / data-science / utils ──
 RUN pip install \
@@ -112,6 +115,17 @@ RUN pip install \
 
 # project code last (most-churned layer)
 COPY . .
+
+# Build-time smoke tests: fail the image here rather than at runtime.
+RUN python -c "import torch, flash_attn, transformers, xformers; \
+      print('torch', torch.__version__); \
+      print('flash-attn', flash_attn.__version__); \
+      print('xformers', xformers.__version__); \
+      print('cuda', torch.version.cuda, torch.cuda.is_available()); \
+      assert torch.__version__.startswith('2.4'), 'torch version mismatch'; \
+      import bitsandbytes; \
+      import trl; print('trl', trl.__version__)" \
+ && llama-cli --version
 
 # RunPod needs the container to stay alive; its own init injects SSH/Jupyter.
 RUN chmod +x /workspace/scripts/start.sh
