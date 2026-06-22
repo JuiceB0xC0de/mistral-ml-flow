@@ -93,8 +93,10 @@ RUN pip install \
 RUN pip install "bitsandbytes>=0.45.3"
 
 # ── Interpretability / SAE ──
-# transformer-lens / sae-lens have loose torch pins; guard against downgrade.
-RUN pip install transformer-lens sae-lens \
+# transformer-lens 2.x stays on torch>=2.2 and transformers>=4.43.
+# sae-lens 6.44+ pins transformer-lens>=2.16.1 which requires torch>=2.6,
+# so sae-lens is intentionally NOT installed in the base image; add at runtime.
+RUN pip install "transformer-lens<3.0" \
  && python -c "import torch; assert torch.__version__.startswith('2.4'), f'torch downgraded: {torch.__version__}'"
 
 # ── Hub / logging / storage / data-science / utils ──

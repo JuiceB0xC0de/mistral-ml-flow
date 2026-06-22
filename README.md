@@ -24,7 +24,7 @@ docker run --rm --gpus all juiceboxdocks/ml-workflow-image:latest \
 
 - Fine-tuning LLMs: full FT, LoRA/QLoRA (`peft` + `bitsandbytes`)
 - RLHF / DPO / PPO (`trl`)
-- Mechanistic interpretability (`transformer-lens`, `sae-lens`)
+- Mechanistic interpretability (`transformer-lens`; `sae-lens` install at runtime)
 - SAE training and feature analysis
 - Local GGUF inference and quantization (`llama.cpp` binaries)
 - Dataset wrangling, W&B logging, Jupyter exploration, pytest CI
@@ -54,13 +54,15 @@ The image is **anchored on a prebuilt flash-attn wheel** so nothing slow has to 
 ## What's installed
 
 torch/torchvision/torchaudio · xformers · flash-attn · transformers · accelerate
-· datasets · peft · trl · bitsandbytes (LoRA/QLoRA) · transformer-lens · sae-lens
+· datasets · peft · trl · bitsandbytes (LoRA/QLoRA) · transformer-lens
 · huggingface_hub + hf_transfer · wandb · tensorboard · boto3 · rclone · llama.cpp
 binaries (`llama-cli`/`llama-server`/`llama-quantize`/`llama-embedding`) compiled
 for CUDA 12.8 + sm_80 · Jupyter · pytest · pandas · scipy · scikit-learn ·
 matplotlib · seaborn · umap-learn · einops · rich · tqdm.
 
-**Intentionally excluded:** DeepSpeed, autoawq, gptqmodel, unsloth, llama-cpp-python.
+**Intentionally excluded:** DeepSpeed, autoawq, gptqmodel, unsloth, llama-cpp-python, sae-lens.
+
+`sae-lens` is excluded because its current releases pin `transformer-lens>=2.16.1`, which forces `torch>=2.6` and breaks our `torch==2.4.0` ABI anchor. Install it at runtime if you need it.
 
 The image ships the official `llama.cpp` binaries directly because building
 `llama-cpp-python` from source in GitHub Actions is slow and unreliable. If you
