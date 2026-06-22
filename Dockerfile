@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 ###############################################################################
 # One-size ML GPU image — ANCHORED on the prebuilt flash-attn wheel.
-# Anchor => Python 3.10 · torch 2.4.0 (pip/abiFALSE) · CUDA 12.x
+# Anchor => Python 3.10 · torch 2.4.0 (pip/cu121, cxx11abiTRUE) · CUDA 12.x
 # Covers: Ampere sm_80 · Ada sm_89 · Hopper sm_90
 # Does NOT cover Blackwell: B200 sm_100, RTX Pro 6000 sm_120
 ###############################################################################
@@ -48,13 +48,19 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
     PIP_NO_CACHE_DIR=1
 
-# ubuntu22.04 already ships Python 3.10 — no deadsnakes, no apt PPA dance
+# Ubuntu 22.04 ships Python 3.10. Make python/python3/pip unambiguous so the
+# base image's /usr/local/bin/python* (if any) does not shadow it.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       python3 python3-dev python3-pip \
       git curl ca-certificates build-essential ninja-build cmake unzip \
  && curl https://rclone.org/install.sh | bash \
  && rm -rf /var/lib/apt/lists/* \
- && python3 -m pip install --upgrade pip setuptools wheel packaging
+ && python3 -m pip install --upgrade pip setuptools wheel packaging \
+ && ln -sf /usr/bin/python3 /usr/local/bin/python \
+ && ln -sf /usr/bin/python3 /usr/local/bin/python3 \
+ && printf '#!/bin/sh\nexec /usr/bin/python3 -m pip "$@"\n' > /usr/local/bin/pip \
+ && chmod +x /usr/local/bin/pip \
+ && ln -sf /usr/local/bin/pip /usr/local/bin/pip3
 
 # llama.cpp: copy precompiled binaries + shared libs; expose on PATH and LD_LIBRARY_PATH.
 COPY --from=llamacpp /opt/llama.cpp /opt/llama.cpp
@@ -69,9 +75,9 @@ RUN pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 \
       --index-url https://download.pytorch.org/whl/cu121
 RUN pip install xformers==0.0.27.post2 --index-url https://download.pytorch.org/whl/cu121
 
-# the anchor — prebuilt, no compile, ~seconds
+# the anchor — prebuilt, no compile, ~seconds. Must match torch ABI (cxx11abiTRUE).
 RUN pip install --no-build-isolation \
-  "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3.post1/flash_attn-2.8.3.post1%2Bcu12torch2.4cxx11abiFALSE-cp310-cp310-linux_x86_64.whl"
+  "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3.post1/flash_attn-2.8.3.post1%2Bcu12torch2.4cxx11abiTRUE-cp310-cp310-linux_x86_64.whl"
 
 # ── Core ML stack (torch-2.4 / py3.10 era) ──
 RUN pip install \
@@ -107,4 +113,6 @@ RUN pip install \
 # project code last (most-churned layer)
 COPY . .
 
-CMD ["bash"]
+# RunPod needs the container to stay alive; its own init injects SSH/Jupyter.
+RUN chmod +x /workspace/scripts/start.sh
+CMD ["/workspace/scripts/start.sh"]

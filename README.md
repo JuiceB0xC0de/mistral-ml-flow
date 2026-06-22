@@ -82,6 +82,8 @@ GitHub Actions builds on push to `main` (or via **Run workflow**) and pushes:
 - **GPU:** A100 / H100 / RTX 6000 Ada
 - **Env:** `HF_TOKEN`, `WANDB_API_KEY`, plus `B2_ACCOUNT` / `B2_KEY` / `B2_BUCKET` for `scripts/sync_pools.sh`
 - **Network volume:** optional; keep hot data local and archive pool batches to B2.
+- **Start command:** leave the template's container start command blank. The image's own `CMD ["/workspace/scripts/start.sh"]` keeps the container alive; RunPod's init injects SSH and Jupyter.
+- If you previously used the `cxx11abiFALSE` wheel, note that the image now uses the `cxx11abiTRUE` wheel to match PyPI torch's ABI.
 
 ## Smoke test
 
