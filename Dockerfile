@@ -36,7 +36,7 @@ RUN pip install xformers==0.0.27.post2 \
       --index-url https://download.pytorch.org/whl/cu121
 
 RUN pip install --no-build-isolation \
-      "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3.post1/flash_attn-2.8.3.post1%2Bcu12torch2.4cxx11abiTRUE-cp310-cp310-linux_x86_64.whl"
+      "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3.post1/flash_attn-2.8.3.post1%2Bcu12torch2.4cxx11abiFALSE-cp310-cp310-linux_x86_64.whl"
 
 RUN pip install \
       "numpy<2" \
