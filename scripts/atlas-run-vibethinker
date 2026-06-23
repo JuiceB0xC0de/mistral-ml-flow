@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="${ATLAS_APP_DIR:-/workspace/atlasing}"
+APP_DIR="${ATLAS_APP_DIR:-/workspace/mistral-atlasing}"
 
 if [ ! -f "${APP_DIR}/app.py" ]; then
   echo "[atlas-run-vibethinker] ${APP_DIR}/app.py not found. Run atlas-clone first." >&2

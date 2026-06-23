@@ -3,12 +3,12 @@
 # GWIQ atlas GPU image
 #
 # Single-purpose runtime for cloning and running the atlas CLI on NVIDIA GPUs.
-# Anchor: Python 3.10, torch 2.4.0 cu121, xformers 0.0.27.post2,
-#         prebuilt flash-attn 2.8.3.post1 CUDA 12 wheel,
+# Anchor: Python 3.10, torch 2.11.0 cu130,
+#         prebuilt flash-attn 2.8.3 CUDA 13 wheel,
 #         xIELU built from source against the same torch/CUDA stack.
 ###############################################################################
 
-FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04
+FROM nvidia/cuda:13.0.0-cudnn-devel-ubuntu22.04
 
 ARG XIELU_REF=main
 
@@ -18,8 +18,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HF_HUB_ENABLE_HF_TRANSFER=1 \
     PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
     PIP_NO_CACHE_DIR=1 \
-    CUDA_HOME=/usr/local/cuda-12.8 \
-    PATH=/usr/local/cuda-12.8/bin:/usr/local/bin:/usr/bin:/bin
+    CUDA_HOME=/usr/local/cuda-13.0 \
+    PATH=/usr/local/cuda-13.0/bin:/usr/local/bin:/usr/bin:/bin
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       python3 python3-dev python3-pip \
@@ -34,14 +34,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /workspace
 
-RUN pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 \
-      --index-url https://download.pytorch.org/whl/cu121
-
-RUN pip install xformers==0.0.27.post2 \
-      --index-url https://download.pytorch.org/whl/cu121
+RUN pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 \
+      --index-url https://download.pytorch.org/whl/cu130
 
 RUN pip install --no-build-isolation \
-      "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.3.12/flash_attn-2.8.0+cu128torch2.4-cp310-cp310-linux_x86_64.whl"
+      "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.9.4/flash_attn-2.8.3+cu130torch2.11-cp310-cp310-linux_x86_64.whl"
 
 RUN CFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" \
     CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" \
@@ -51,7 +48,8 @@ RUN CFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" \
 
 RUN pip install \
       "numpy<2" \
-      "transformers>=4.56" \
+      "transformers==5.0.0rc0" \
+      "mistral-common>=1.8.6" \
       "accelerate>=0.34" \
       "huggingface_hub>=0.19.0,<1.0.0" \
       "hf_transfer>=0.1.9" \
@@ -69,14 +67,17 @@ RUN pip install \
 COPY scripts/ /usr/local/bin/
 RUN chmod +x /usr/local/bin/start.sh \
       /usr/local/bin/atlas-clone \
+      /usr/local/bin/atlas-run-ministral \
       /usr/local/bin/atlas-run-vibethinker
 
-RUN python -c "import torch, flash_attn, transformers, numpy, orjson, sklearn, xielu; \
+RUN python -c "import torch, flash_attn, transformers, numpy, orjson, sklearn, xielu, mistral_common; \
+      from transformers import Mistral3ForConditionalGeneration, MistralCommonBackend; \
       print('torch', torch.__version__); \
       print('flash-attn', flash_attn.__version__); \
       print('transformers', transformers.__version__); \
+      print('mistral-common', mistral_common.__version__); \
       print('xielu', getattr(xielu, '__version__', 'source-build')); \
       print('cuda', torch.version.cuda, torch.cuda.is_available()); \
-      assert torch.__version__.startswith('2.4'), torch.__version__"
+      assert torch.__version__.startswith('2.11'), torch.__version__"
 
 CMD ["/usr/local/bin/start.sh"]

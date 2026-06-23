@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-log() { echo "[gwiq-atlas-image] $*"; }
+log() { echo "[mistral-atlas-image] $*"; }
 
 log "stay-alive entrypoint started (PID $$)"
 log "python: $(command -v python)"
@@ -26,6 +26,6 @@ else
 fi
 log "cuda visible: $(python -c 'import torch; print(torch.cuda.is_available(), torch.cuda.device_count())' 2>&1)"
 log "clone atlas app with: atlas-clone"
-log "run default scan with: atlas-run-vibethinker"
+log "run default scan with: atlas-run-ministral"
 
 exec tail -f /dev/null

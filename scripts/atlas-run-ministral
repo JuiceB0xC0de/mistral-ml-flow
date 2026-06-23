@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${ATLAS_APP_DIR:-/workspace/mistral-atlasing}"
+
+if [ ! -f "${APP_DIR}/app.py" ]; then
+  echo "[atlas-run-ministral] ${APP_DIR}/app.py not found. Run atlas-clone first." >&2
+  exit 1
+fi
+
+exec python "${APP_DIR}/app.py" \
+  --model "${ATLAS_MODEL_ID:-mistralai/Ministral-3-3B-Base-2512}" \
+  --corpus "${ATLAS_CORPUS:-${APP_DIR}/prompts/prompts.jsonl}" \
+  --outdir "${ATLAS_OUTDIR:-/workspace/outputs/ministral-3-3b-census}" \
+  --atlas "${ATLAS_DB_DIR:-/workspace/atlas/ministral-3-3b}" \
+  --batch-size "${ATLAS_BATCH_SIZE:-8}" \
+  --max-length "${ATLAS_MAX_LENGTH:-128}" \
+  --components "${ATLAS_COMPONENTS:-mlp,gate,up}" \
+  "$@"

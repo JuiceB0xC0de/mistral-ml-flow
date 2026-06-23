@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SOURCE="${1:-https://huggingface.co/spaces/juiceb0xc0de/atlasing}"
-TARGET="${2:-/workspace/atlasing}"
+SOURCE="${1:-https://huggingface.co/spaces/juiceb0xc0de/mistral-atlasing}"
+TARGET="${2:-/workspace/mistral-atlasing}"
 
 git_with_hf_auth() {
   if [ -n "${HF_TOKEN:-}" ]; then
