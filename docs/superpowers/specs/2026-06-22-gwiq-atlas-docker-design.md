@@ -28,8 +28,10 @@ Install:
 - `torch==2.4.0`, `torchvision==0.19.0`, `torchaudio==2.4.0` from the PyTorch CUDA 12.1 wheel index.
 - `xformers==0.0.27.post2` from the same PyTorch wheel index.
 - Prebuilt `flash_attn==2.8.3.post1` wheel URL for CUDA 12, torch 2.4, Python 3.10, Linux x86_64, `cxx11abiTRUE`.
+- `cuda-toolkit-12-8` and `cmake` so the xIELU extension can be built from source with nvcc.
+- `xielu` from the upstream GitHub source repo, compiled against the same torch 2.4 + CUDA 12.8 stack with the torch ABI flag aligned.
 
-FlashAttention is intentionally the one difficult dependency. The Dockerfile must download a prebuilt wheel, not build it.
+FlashAttention is intentionally kept as a prebuilt wheel. xIELU is the one source-built dependency and should compile inside the image, not at runtime.
 
 ## Atlas Runtime Dependencies
 
@@ -90,6 +92,7 @@ Batch size is expected to be tuned upward on the actual GPU after a smoke run.
 Build-time smoke checks:
 
 - Import `torch`, `flash_attn`, `transformers`, `numpy`, `orjson`, `sklearn`.
+- Import `xielu` and confirm the CUDA toolchain is present (`cmake --version`, `nvcc --version`).
 - Assert torch is still `2.4.x`.
 - Print CUDA build version and `torch.cuda.is_available()`.
 - Verify the helper scripts are executable.

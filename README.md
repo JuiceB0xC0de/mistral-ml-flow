@@ -5,7 +5,7 @@
 
 Single-purpose NVIDIA GPU image for running the GWIQ atlas CLI from a pod or Docker host.
 
-This image is no longer an "install every ML tool" workstation. It gives you a clean CUDA/Python runtime with PyTorch, Transformers, and a prebuilt FlashAttention wheel. The atlas app itself is cloned into the container at runtime.
+This image is no longer an "install every ML tool" workstation. It gives you a clean CUDA/Python runtime with PyTorch, Transformers, a prebuilt FlashAttention wheel, and a source-built xIELU extension. The atlas app itself is cloned into the container at runtime.
 
 ## Quick Start
 
@@ -72,7 +72,7 @@ atlas-clone https://huggingface.co/spaces/juiceb0xc0de/atlasing /workspace/atlas
 
 ## FlashAttention Anchor
 
-The one intentionally difficult package is FlashAttention. This image does not compile it.
+The intentionally difficult packages are FlashAttention and xIELU. FlashAttention is still installed from a prebuilt wheel. xIELU is built from source during the image build, but only after the image has a real CUDA toolchain and C++ build chain available.
 
 Installed stack:
 
@@ -80,20 +80,26 @@ Installed stack:
 |---|---|
 | Base image | `nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04` |
 | Python | Ubuntu 22.04 Python 3.10 |
+| CUDA toolkit | `cuda-toolkit-12-8` |
+| CMake | Ubuntu package `cmake` |
 | PyTorch | `torch==2.4.0` from CUDA 12.1 wheel index |
 | xformers | `0.0.27.post2` |
 | FlashAttention | prebuilt `2.8.3.post1+cu12torch2.4cxx11abiTRUE` wheel |
+| xIELU | source build from `nickjbrowning/XIELU` |
 | Transformers | `>=4.54` for `WeiboAI/VibeThinker-3B` |
 
 FlashAttention-2 supports Ampere, Ada, and Hopper GPUs. The first target is Ada Lovelace, especially RTX 4090 class cards.
 
 Note: the atlas extractor captures activations through model hooks. FlashAttention is included so the environment is ready for compatible training/inference paths, but a particular atlas scan only benefits directly if the model path dispatches through FlashAttention-compatible attention.
 
+The xIELU build uses the same torch 2.4 / CUDA 12.8 anchor and is compiled with the C++11 ABI flag aligned to torch. If you need a strict source pin, set the `XIELU_REF` build arg in the Docker build.
+
 ## What's Installed
 
 - PyTorch / torchvision / torchaudio
 - xformers
 - FlashAttention
+- xIELU
 - Transformers
 - Accelerate
 - Hugging Face Hub + `hf_transfer`
@@ -149,5 +155,5 @@ Smoke import:
 
 ```bash
 docker run --rm --gpus all gwiq-atlas-image:local bash -lc \
-  "python -c 'import torch, flash_attn, transformers; print(torch.__version__, flash_attn.__version__, transformers.__version__)'"
+  "python -c 'import torch, flash_attn, transformers, xielu; print(torch.__version__, flash_attn.__version__, transformers.__version__, getattr(xielu, \"__version__\", \"source-build\"))'"
 ```
