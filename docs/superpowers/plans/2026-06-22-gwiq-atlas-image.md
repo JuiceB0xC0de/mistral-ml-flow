@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Use `nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04`.
+- Use `nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04`.
 - Install FlashAttention from a prebuilt wheel; do not compile it.
 - Exclude `sae-lens`, `transformer-lens`, `trl`, `peft`, `bitsandbytes`, `llama.cpp`, Jupyter, and notebook tooling.
 - Do not vendor or fork GWIQ/atlasing into `ML-workflow-image`.
@@ -116,7 +116,7 @@ Use a single-stage Dockerfile with these logical sections:
 
 ```dockerfile
 # syntax=docker/dockerfile:1
-FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04
+FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \

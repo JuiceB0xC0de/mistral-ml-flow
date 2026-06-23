@@ -21,14 +21,14 @@ This keeps `ML-workflow-image` as the container recipe and leaves GWIQ/atlasing 
 
 ## Base Image And GPU Stack
 
-Use `nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04` with Ubuntu's Python 3.10.
+Use `nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04` with Ubuntu's Python 3.10.
 
 Install:
 
 - `torch==2.4.0`, `torchvision==0.19.0`, `torchaudio==2.4.0` from the PyTorch CUDA 12.1 wheel index.
 - `xformers==0.0.27.post2` from the same PyTorch wheel index.
 - Prebuilt `flash_attn==2.8.3.post1` wheel URL for CUDA 12, torch 2.4, Python 3.10, Linux x86_64, `cxx11abiTRUE`.
-- `cuda-toolkit-12-8` and `cmake` so the xIELU extension can be built from source with nvcc.
+- nvcc and CUDA headers from the devel base image, plus `cmake>=3.30` from pip, so the xIELU extension can be built from source without fighting apt.
 - `xielu` from the upstream GitHub source repo, compiled against the same torch 2.4 + CUDA 12.8 stack with the torch ABI flag aligned.
 
 FlashAttention is intentionally kept as a prebuilt wheel. xIELU is the one source-built dependency and should compile inside the image, not at runtime.

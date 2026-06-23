@@ -8,7 +8,7 @@
 #         xIELU built from source against the same torch/CUDA stack.
 ###############################################################################
 
-FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04
+FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04
 
 ARG XIELU_REF=main
 
@@ -23,9 +23,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       python3 python3-dev python3-pip \
-      git curl ca-certificates build-essential ninja-build cmake cuda-toolkit-12-8 \
+      git curl ca-certificates build-essential ninja-build \
  && rm -rf /var/lib/apt/lists/* \
- && python3 -m pip install --upgrade pip setuptools wheel packaging psutil \
+ && python3 -m pip install --upgrade pip setuptools wheel packaging psutil "cmake>=3.30" \
  && ln -sf /usr/bin/python3 /usr/local/bin/python \
  && ln -sf /usr/bin/python3 /usr/local/bin/python3 \
  && printf '#!/bin/sh\nexec /usr/bin/python3 -m pip "$@"\n' > /usr/local/bin/pip \

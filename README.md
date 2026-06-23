@@ -78,10 +78,10 @@ Installed stack:
 
 | Package | Version |
 |---|---|
-| Base image | `nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04` |
+| Base image | `nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04` |
 | Python | Ubuntu 22.04 Python 3.10 |
-| CUDA toolkit | `cuda-toolkit-12-8` |
-| CMake | Ubuntu package `cmake` |
+| CUDA tooling | nvcc + headers from the CUDA devel base image |
+| CMake | `cmake>=3.30` from pip |
 | PyTorch | `torch==2.4.0` from CUDA 12.1 wheel index |
 | xformers | `0.0.27.post2` |
 | FlashAttention | prebuilt `2.8.3.post1+cu12torch2.4cxx11abiTRUE` wheel |
