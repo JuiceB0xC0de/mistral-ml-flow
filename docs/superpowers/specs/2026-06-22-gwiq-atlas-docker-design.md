@@ -29,7 +29,7 @@ Install:
 - `xformers==0.0.27.post2` from the same PyTorch wheel index.
 - Prebuilt `flash_attn==2.8.3.post1` wheel URL for CUDA 12, torch 2.4, Python 3.10, Linux x86_64, `cxx11abiTRUE`.
 - nvcc and CUDA headers from the devel base image, plus `cmake>=3.30` from pip, so the xIELU extension can be built from source without fighting apt.
-- `xielu` from the upstream GitHub source repo, compiled against the same torch 2.4 + CUDA 12.8 stack with the torch ABI flag aligned.
+- `xielu` from the upstream GitHub source repo, compiled against the same torch 2.4 + CUDA 12.8 stack with the torch ABI flag aligned. Install it with `--no-deps`; otherwise its loose `torch>=2.0` dependency may replace the pinned torch/FlashAttention pair.
 
 FlashAttention is intentionally kept as a prebuilt wheel. xIELU is the one source-built dependency and should compile inside the image, not at runtime.
 

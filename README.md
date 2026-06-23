@@ -92,7 +92,7 @@ FlashAttention-2 supports Ampere, Ada, and Hopper GPUs. The first target is Ada 
 
 Note: the atlas extractor captures activations through model hooks. FlashAttention is included so the environment is ready for compatible training/inference paths, but a particular atlas scan only benefits directly if the model path dispatches through FlashAttention-compatible attention.
 
-The xIELU build uses the same torch 2.4 / CUDA 12.8 anchor and is compiled with the C++11 ABI flag aligned to torch. If you need a strict source pin, set the `XIELU_REF` build arg in the Docker build.
+The xIELU build uses the same torch 2.4 / CUDA 12.8 anchor and is compiled with the C++11 ABI flag aligned to torch. It is installed with `--no-deps` so its loose `torch>=2.0` dependency cannot upgrade the pinned PyTorch/FlashAttention stack. If you need a strict source pin, set the `XIELU_REF` build arg in the Docker build.
 
 ## What's Installed
 

@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python3 python3-dev python3-pip \
       git curl ca-certificates build-essential ninja-build \
  && rm -rf /var/lib/apt/lists/* \
- && python3 -m pip install --upgrade pip setuptools wheel packaging psutil "cmake>=3.30" \
+ && python3 -m pip install --upgrade pip setuptools wheel packaging psutil "cmake>=3.30" nvtx \
  && ln -sf /usr/bin/python3 /usr/local/bin/python \
  && ln -sf /usr/bin/python3 /usr/local/bin/python3 \
  && printf '#!/bin/sh\nexec /usr/bin/python3 -m pip "$@"\n' > /usr/local/bin/pip \
@@ -46,7 +46,7 @@ RUN pip install --no-build-isolation \
 RUN CFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" \
     CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" \
     TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0" \
-    pip install --no-cache-dir --no-build-isolation --force-reinstall \
+    pip install --no-cache-dir --no-build-isolation --no-deps \
       "git+https://github.com/nickjbrowning/XIELU@${XIELU_REF}"
 
 RUN pip install \
