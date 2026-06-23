@@ -36,12 +36,12 @@ RUN pip install xformers==0.0.27.post2 \
       --index-url https://download.pytorch.org/whl/cu121
 
 RUN pip install --no-build-isolation \
-      "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.0.4/flash_attn-2.7.3+cu121torch2.4-cp310-cp310-linux_x86_64.whl"
+      "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.3.12/flash_attn-2.8.0+cu128torch2.4-cp310-cp310-linux_x86_64.whl"
 RUN pip install \
       "numpy<2" \
-      "transformers>=4.54" \
+      "transformers>=4.56" \
       "accelerate>=0.34" \
-      "huggingface_hub>=0.24" \
+      "huggingface_hub>=0.19.0,<1.0.0" \
       "hf_transfer>=0.1.9" \
       "orjson>=3.10" \
       "pandas>=2.2" \
