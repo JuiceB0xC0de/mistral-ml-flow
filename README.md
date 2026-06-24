@@ -1,8 +1,5 @@
 # mistral-ml-flow
 
-[![Docker Image CI](https://github.com/JuiceB0xC0de/ML-workflow-image/actions/workflows/docker.yml/badge.svg)](https://github.com/JuiceB0xC0de/ML-workflow-image/actions/workflows/docker.yml)
-[![Docker Pulls](https://img.shields.io/docker/pulls/juiceboxdocks/ml-workflow-image)](https://hub.docker.com/r/juiceboxdocks/ml-workflow-image)
-
 Single-purpose NVIDIA GPU image for running the GWIQ atlas CLI from a pod or Docker host.
 
 This image is no longer an "install every ML tool" workstation. It gives you a clean CUDA/Python runtime with PyTorch, Transformers, a prebuilt FlashAttention wheel, and a source-built xIELU extension. The atlas app itself is cloned into the container at runtime.
