@@ -1,13 +1,22 @@
 # mistral-ml-flow
 
-Single-purpose NVIDIA GPU image for running the GWIQ atlas CLI from a pod or Docker host.
+Single-purpose NVIDIA GPU image for running the GWIQ **Mistral atlas** CLI from a
+RunPod pod or any Docker host.
 
-This image is no longer an "install every ML tool" workstation. It gives you a clean CUDA/Python runtime with PyTorch, Transformers, a prebuilt FlashAttention wheel, and a source-built xIELU extension. The atlas app itself is cloned into the container at runtime.
+This is a CLI-first CUDA 13 runtime, not an "install every ML tool" workstation.
+It ships a clean Python/PyTorch stack with a prebuilt FlashAttention wheel and a
+source-built xIELU extension, plus `mistral-common` for Mistral/Ministral models.
+The atlas app itself is cloned into the container at runtime from a Hugging Face
+Space — it is not baked into the image.
+
+- **Image:** `juiceboxdocks/mistral-ml-flow`
+- **Tags:** `latest`, `cu130` (current), `cu128` (legacy alias → same CUDA 13 image)
+- **Default model:** `mistralai/Ministral-3-3B-Base-2512`
 
 ## Quick Start
 
 ```bash
-docker pull juiceboxdocks/ml-workflow-image:latest
+docker pull juiceboxdocks/mistral-ml-flow:latest
 
 docker run --rm -it --gpus all \
   -e HF_TOKEN="$HF_TOKEN" \
@@ -15,142 +24,151 @@ docker run --rm -it --gpus all \
   -v "$PWD/prompts:/workspace/prompts" \
   -v "$PWD/outputs:/workspace/outputs" \
   -v "$PWD/atlas:/workspace/atlas" \
-  juiceboxdocks/ml-workflow-image:latest bash
+  juiceboxdocks/mistral-ml-flow:latest bash
 ```
 
 Inside the container:
 
 ```bash
-atlas-clone
-atlas-run-vibethinker
+atlas-clone            # pulls the atlas app into /workspace/mistral-atlasing
+atlas-run-ministral    # default scan: mistralai/Ministral-3-3B-Base-2512
 ```
 
-The default scan runs:
+The default `atlas-run-ministral` runs:
 
 ```bash
-python /workspace/atlasing/app.py \
-  --model WeiboAI/VibeThinker-3B \
-  --corpus /workspace/prompts/prompts.jsonl \
-  --outdir /workspace/outputs/vibethinker-3b-census \
-  --atlas /workspace/atlas/vibethinker-3b \
+python /workspace/mistral-atlasing/app.py \
+  --model mistralai/Ministral-3-3B-Base-2512 \
+  --corpus /workspace/mistral-atlasing/prompts/prompts.jsonl \
+  --outdir /workspace/outputs/ministral-3-3b-census \
+  --atlas /workspace/atlas/ministral-3-3b \
   --batch-size 8 \
   --max-length 128 \
   --components mlp,gate,up
 ```
 
-Tune from there:
+Everything is overridable by environment variable, e.g.:
 
 ```bash
-ATLAS_BATCH_SIZE=12 atlas-run-vibethinker --layers 0
-ATLAS_BATCH_SIZE=12 atlas-run-vibethinker
+ATLAS_BATCH_SIZE=12 ATLAS_MODEL_ID=mistralai/Ministral-3-3B-Base-2512 \
+  atlas-run-ministral --layers 0
 ```
+
+| Env var | Default |
+|---|---|
+| `ATLAS_MODEL_ID` | `mistralai/Ministral-3-3B-Base-2512` |
+| `ATLAS_APP_DIR` | `/workspace/mistral-atlasing` |
+| `ATLAS_CORPUS` | `<APP_DIR>/prompts/prompts.jsonl` |
+| `ATLAS_OUTDIR` | `/workspace/outputs/ministral-3-3b-census` |
+| `ATLAS_DB_DIR` | `/workspace/atlas/ministral-3-3b` |
+| `ATLAS_BATCH_SIZE` | `8` |
+| `ATLAS_MAX_LENGTH` | `128` |
+| `ATLAS_COMPONENTS` | `mlp,gate,up` |
+
+## Scripts
+
+All live on `PATH` inside the container.
+
+| Command | What it does |
+|---|---|
+| `start.sh` | Default entrypoint. Prints runtime versions (python, torch, flash-attn, xielu, CUDA) and stays alive (`tail -f /dev/null`). |
+| `atlas-clone [src] [dst]` | Clones/refreshes the atlas app. Defaults: `https://huggingface.co/spaces/juiceb0xc0de/mistral-atlasing` → `/workspace/mistral-atlasing`. Uses `HF_TOKEN` for private/gated Spaces. |
+| `atlas-run-ministral [args]` | Default Ministral-3-3B scan (see above). Extra args pass through to `app.py`. |
+| `atlas-run-vibethinker [args]` | Same harness against `WeiboAI/VibeThinker-3B`. |
+| `sync_pools push\|pull <layer> [bucket]` | Backblaze B2 sync of SAE pool batches (layer-1, layer, layer+1). Requires `rclone` plus `B2_ACCOUNT` / `B2_KEY` / `B2_BUCKET`. **`rclone` is not in the image — install it on the pod before using.** |
 
 ## Runtime Layout
 
 | Path | Purpose |
 |---|---|
-| `/workspace/atlasing` | Cloned GWIQ atlas app |
+| `/workspace/mistral-atlasing` | Cloned atlas app (`app.py`) |
 | `/workspace/prompts` | Prompt JSONL files |
-| `/workspace/outputs` | Census and analysis outputs |
-| `/workspace/atlas` | Final atlas directory |
+| `/workspace/outputs` | Census / analysis outputs |
+| `/workspace/atlas` | Final atlas directories |
 | `/root/.cache/huggingface` | Hugging Face model cache |
 
-`atlas-clone` defaults to:
+## Installed Stack
 
-```bash
-git clone https://huggingface.co/spaces/juiceb0xc0de/atlasing /workspace/atlasing
-```
-
-Pass a different source or target if needed:
-
-```bash
-atlas-clone https://huggingface.co/spaces/juiceb0xc0de/atlasing /workspace/atlasing
-```
-
-## FlashAttention Anchor
-
-The intentionally difficult packages are FlashAttention and xIELU. FlashAttention is still installed from a prebuilt wheel. xIELU is built from source during the image build, but only after the image has a real CUDA toolchain and C++ build chain available.
-
-Installed stack:
-
-| Package | Version |
+| Component | Version |
 |---|---|
-| Base image | `nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04` |
+| Base image | `nvidia/cuda:13.0.0-cudnn-devel-ubuntu22.04` |
 | Python | Ubuntu 22.04 Python 3.10 |
-| CUDA tooling | nvcc + headers from the CUDA devel base image |
-| CMake | `cmake>=3.30` from pip |
-| PyTorch | `torch==2.4.0` from CUDA 12.1 wheel index |
-| xformers | `0.0.27.post2` |
-| FlashAttention | prebuilt `2.8.3.post1+cu12torch2.4cxx11abiTRUE` wheel |
-| xIELU | source build from `nickjbrowning/XIELU` |
-| Transformers | `>=4.54` for `WeiboAI/VibeThinker-3B` |
+| CUDA tooling | nvcc + headers from the CUDA 13.0 devel base |
+| PyTorch | `torch==2.11.0` (+ `torchvision==0.26.0`, `torchaudio==2.11.0`), cu130 wheel index |
+| FlashAttention | prebuilt `flash_attn-2.8.3+cu130torch2.11` cp310 wheel |
+| xIELU | source build from `nickjbrowning/XIELU` (`--no-deps`, C++11-ABI=0, arch `8.0;8.6;8.9;9.0`) |
+| Transformers | `5.0.0rc0` |
+| mistral-common | `>=1.8.6` |
+| Accelerate | `>=0.34` |
+| Hugging Face Hub | `>=1.0.0,<2.0.0` (+ `hf_transfer`) |
+| Scientific | `numpy<2`, scipy, pandas, scikit-learn, matplotlib, seaborn |
+| Serialization / text | orjson, tqdm, tokenizers, sentencepiece, protobuf |
 
-FlashAttention-2 supports Ampere, Ada, and Hopper GPUs. The first target is Ada Lovelace, especially RTX 4090 class cards.
+FlashAttention-2 supports Ampere, Ada, and Hopper GPUs. The xIELU build is
+arch-targeted at `8.0;8.6;8.9;9.0` (A100, A10/30xx, Ada/4090/6000 Ada, H100) and
+installed with `--no-deps` so its loose `torch>=2.0` requirement cannot upgrade the
+pinned torch/FlashAttention stack. Set the `XIELU_REF` build arg to pin a source rev.
 
-Note: the atlas extractor captures activations through model hooks. FlashAttention is included so the environment is ready for compatible training/inference paths, but a particular atlas scan only benefits directly if the model path dispatches through FlashAttention-compatible attention.
-
-The xIELU build uses the same torch 2.4 / CUDA 12.8 anchor and is compiled with the C++11 ABI flag aligned to torch. It is installed with `--no-deps` so its loose `torch>=2.0` dependency cannot upgrade the pinned PyTorch/FlashAttention stack. If you need a strict source pin, set the `XIELU_REF` build arg in the Docker build.
-
-## What's Installed
-
-- PyTorch / torchvision / torchaudio
-- xformers
-- FlashAttention
-- xIELU
-- Transformers
-- Accelerate
-- Hugging Face Hub + `hf_transfer`
-- NumPy, SciPy, pandas, scikit-learn
-- matplotlib, seaborn
-- orjson, tqdm, tokenizers, sentencepiece, protobuf
+> Note: the atlas extractor captures activations through model hooks.
+> FlashAttention is present so the environment is ready for compatible
+> training/inference paths, but a given scan only benefits if the model path
+> dispatches through FlashAttention-compatible attention.
 
 ## What's Excluded
 
-These are intentionally not installed:
-
-- `sae-lens`
-- `transformer-lens`
-- `trl`
-- `peft`
-- `bitsandbytes`
-- `llama.cpp`
-- `llama-cpp-python`
-- Jupyter/notebook tooling
-- DeepSpeed, AutoAWQ, GPTQModel, Unsloth
-
-Install extras later only after the atlas image is proven.
+Intentionally not installed (no xformers, no notebook tooling, no quantization/
+training extras): `xformers`, `sae-lens`, `transformer-lens`, `trl`, `peft`,
+`bitsandbytes`, `llama.cpp`, `llama-cpp-python`, Jupyter/notebook, DeepSpeed,
+AutoAWQ, GPTQModel, Unsloth. Add extras only after the image is proven.
 
 ## RunPod
 
-- **Image:** `juiceboxdocks/ml-workflow-image:latest`
+- **Image:** `juiceboxdocks/mistral-ml-flow:latest`
+- **Template:** `mlworkflowimage` (`n5y733j8pc`) — container disk 75 GB, volume 750 GB at `/workspace`
+- **Ports:** `8080/http`, `8888/http`, `8000/http`, `22/tcp`, `22/udp`
 - **GPU:** RTX 4090 / RTX 6000 Ada / A100 / H100
 - **Env:** set `HF_TOKEN` for gated/private models or Space clones
-- **Start command:** leave blank. The image starts `/usr/local/bin/start.sh`, prints runtime versions, and stays alive.
-- **Workflow:** SSH into the pod, run `atlas-clone`, confirm prompts exist under `/workspace/prompts`, then run `atlas-run-vibethinker`.
+- **Start command:** leave blank — the image runs `start.sh`, prints versions, and stays alive
+- **Workflow:** SSH in → `atlas-clone` → confirm prompts under `/workspace/prompts` → `atlas-run-ministral`
 
-Jupyter may be supplied by the RunPod template, but this image does not install it. The intended atlas workflow is CLI-first.
+### Pulling a private image
+
+If `juiceboxdocks/mistral-ml-flow` is private on Docker Hub, RunPod needs
+registry credentials or the pull fails with
+`unauthorized: repository is private or does not exist`:
+
+1. **Settings → Container Registry Auth → Add** — name it (e.g. `dockerhub`),
+   username = your Docker Hub user, password = a Docker Hub **access token**.
+2. Attach that auth to this template (or the pod) so `containerRegistryAuthId`
+   is set, then start the pod.
+
+Alternatively, make the Docker Hub repo public and no auth is needed.
+
+> Make sure the pod/template reference the canonical name
+> `juiceboxdocks/mistral-ml-flow` — not `mistral-ml-workflow` or
+> `ml-workflow-image`, which are stale and will 404 on pull.
 
 ## Build
 
-GitHub Actions builds on push to `main` and publishes:
+GitHub Actions builds on push to `main` (changes to `Dockerfile`, `scripts/**`,
+or the workflow) and on manual dispatch, publishing:
 
-- `juiceboxdocks/ml-workflow-image:latest`
-- `juiceboxdocks/ml-workflow-image:cu128`
+- `juiceboxdocks/mistral-ml-flow:latest`
+- `juiceboxdocks/mistral-ml-flow:cu130`
+- `juiceboxdocks/mistral-ml-flow:cu128` (legacy alias)
 
 Required repo secrets:
 
 - `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN`
+- `DOCKERHUB_TOKEN` (Docker Hub access token with push rights)
 
-Local build:
-
-```bash
-docker buildx build --load -t gwiq-atlas-image:local .
-```
-
-Smoke import:
+Local build + smoke import:
 
 ```bash
-docker run --rm --gpus all gwiq-atlas-image:local bash -lc \
-  "python -c 'import torch, flash_attn, transformers, xielu; print(torch.__version__, flash_attn.__version__, transformers.__version__, getattr(xielu, \"__version__\", \"source-build\"))'"
+docker buildx build --load -t mistral-ml-flow:local .
+
+docker run --rm --gpus all mistral-ml-flow:local bash -lc \
+  "python -c 'import torch, flash_attn, transformers, xielu, mistral_common; \
+   print(torch.__version__, flash_attn.__version__, transformers.__version__, \
+   mistral_common.__version__, getattr(xielu, \"__version__\", \"source-build\"))'"
 ```
