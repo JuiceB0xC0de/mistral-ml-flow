@@ -1,8 +1,8 @@
 name: Build & Push Mistral ML Image
 
 # Builds the CUDA 13 Mistral/Ministral atlas image and pushes it to Docker Hub.
-# Canonical image: juiceboxdocks/mistral-ml-flow (matches this repo + the RunPod
-# template). Requires repo secrets DOCKERHUB_USERNAME and DOCKERHUB_TOKEN.
+# Image: juiceboxdocks/ml-workflow-image (public). Requires repo secrets
+# DOCKERHUB_USERNAME and DOCKERHUB_TOKEN.
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The CUDA 13 devel image is ~20GB; reclaim runner disk before building.
+      # The CUDA 13 devel image is large; reclaim runner disk before building.
       - name: Free disk space
         uses: jlumbroso/free-disk-space@main
         with:
@@ -41,14 +41,12 @@ jobs:
         with:
           context: .
           push: true
+          # Image is CUDA 13.0 -> tag cu130 (not cu128). 'latest' tracks the
+          # newest build. The legacy cu128 tag still exists on Docker Hub for
+          # back-compat but is no longer pushed here.
           tags: |
-            juiceboxdocks/mistral-ml-flow:latest
-            juiceboxdocks/mistral-ml-flow:cu130
-            juiceboxdocks/mistral-ml-flow:cu128
-          # cu128 is a legacy alias kept so existing pods/templates that still
-          # reference :cu128 keep resolving. The image is actually CUDA 13.0
-          # (cu130); migrate references to :cu130 or :latest when convenient.
-          #
+            juiceboxdocks/ml-workflow-image:latest
+            juiceboxdocks/ml-workflow-image:cu130
           # No gha cache: mode=max ~doubles peak disk by materializing every
           # layer for export, which OOM'd the runner on this ~20GB CUDA image.
           provenance: false

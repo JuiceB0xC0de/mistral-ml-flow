@@ -9,14 +9,14 @@ source-built xIELU extension, plus `mistral-common` for Mistral/Ministral models
 The atlas app itself is cloned into the container at runtime from a Hugging Face
 Space — it is not baked into the image.
 
-- **Image:** `juiceboxdocks/mistral-ml-flow`
+- **Image:** `juiceboxdocks/ml-workflow-image`
 - **Tags:** `latest`, `cu130` (current), `cu128` (legacy alias → same CUDA 13 image)
 - **Default model:** `mistralai/Ministral-3-3B-Base-2512`
 
 ## Quick Start
 
 ```bash
-docker pull juiceboxdocks/mistral-ml-flow:latest
+docker pull juiceboxdocks/ml-workflow-image:latest
 
 docker run --rm -it --gpus all \
   -e HF_TOKEN="$HF_TOKEN" \
@@ -24,7 +24,7 @@ docker run --rm -it --gpus all \
   -v "$PWD/prompts:/workspace/prompts" \
   -v "$PWD/outputs:/workspace/outputs" \
   -v "$PWD/atlas:/workspace/atlas" \
-  juiceboxdocks/mistral-ml-flow:latest bash
+  juiceboxdocks/ml-workflow-image:latest bash
 ```
 
 Inside the container:
@@ -123,7 +123,7 @@ AutoAWQ, GPTQModel, Unsloth. Add extras only after the image is proven.
 
 ## RunPod
 
-- **Image:** `juiceboxdocks/mistral-ml-flow:latest`
+- **Image:** `juiceboxdocks/ml-workflow-image:latest`
 - **Template:** `mlworkflowimage` (`n5y733j8pc`) — container disk 75 GB, volume 750 GB at `/workspace`
 - **Ports:** `8080/http`, `8888/http`, `8000/http`, `22/tcp`, `22/udp`
 - **GPU:** RTX 4090 / RTX 6000 Ada / A100 / H100
@@ -133,7 +133,7 @@ AutoAWQ, GPTQModel, Unsloth. Add extras only after the image is proven.
 
 ### Pulling a private image
 
-If `juiceboxdocks/mistral-ml-flow` is private on Docker Hub, RunPod needs
+If `juiceboxdocks/ml-workflow-image` is private on Docker Hub, RunPod needs
 registry credentials or the pull fails with
 `unauthorized: repository is private or does not exist`:
 
@@ -144,18 +144,20 @@ registry credentials or the pull fails with
 
 Alternatively, make the Docker Hub repo public and no auth is needed.
 
-> Make sure the pod/template reference the canonical name
-> `juiceboxdocks/mistral-ml-flow` — not `mistral-ml-workflow` or
-> `ml-workflow-image`, which are stale and will 404 on pull.
+> Use `juiceboxdocks/ml-workflow-image:latest` (or `:cu130`). The names
+> `mistral-ml-flow` and `mistral-ml-workflow` were never built as images and
+> will 404 on pull — only `ml-workflow-image` exists on Docker Hub.
 
 ## Build
 
 GitHub Actions builds on push to `main` (changes to `Dockerfile`, `scripts/**`,
 or the workflow) and on manual dispatch, publishing:
 
-- `juiceboxdocks/mistral-ml-flow:latest`
-- `juiceboxdocks/mistral-ml-flow:cu130`
-- `juiceboxdocks/mistral-ml-flow:cu128` (legacy alias)
+- `juiceboxdocks/ml-workflow-image:latest`
+- `juiceboxdocks/ml-workflow-image:cu130`
+
+(The legacy `:cu128` tag still exists on Docker Hub for back-compat but is no
+longer pushed — the image is CUDA 13.0.)
 
 Required repo secrets:
 
@@ -165,9 +167,9 @@ Required repo secrets:
 Local build + smoke import:
 
 ```bash
-docker buildx build --load -t mistral-ml-flow:local .
+docker buildx build --load -t ml-workflow-image:local .
 
-docker run --rm --gpus all mistral-ml-flow:local bash -lc \
+docker run --rm --gpus all ml-workflow-image:local bash -lc \
   "python -c 'import torch, flash_attn, transformers, xielu, mistral_common; \
    print(torch.__version__, flash_attn.__version__, transformers.__version__, \
    mistral_common.__version__, getattr(xielu, \"__version__\", \"source-build\"))'"
