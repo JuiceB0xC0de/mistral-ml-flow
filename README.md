@@ -1,4 +1,4 @@
-# ML-workflow-image
+# mistral-ml-flow
 
 [![Docker Image CI](https://github.com/JuiceB0xC0de/ML-workflow-image/actions/workflows/docker.yml/badge.svg)](https://github.com/JuiceB0xC0de/ML-workflow-image/actions/workflows/docker.yml)
 [![Docker Pulls](https://img.shields.io/docker/pulls/juiceboxdocks/ml-workflow-image)](https://hub.docker.com/r/juiceboxdocks/ml-workflow-image)
