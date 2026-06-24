@@ -51,7 +51,7 @@ RUN pip install \
       "transformers==5.0.0rc0" \
       "mistral-common>=1.8.6" \
       "accelerate>=0.34" \
-      "huggingface_hub>=0.19.0,<1.0.0" \
+      "huggingface_hub>=1.0.0,<2.0.0" \
       "hf_transfer>=0.1.9" \
       "orjson>=3.10" \
       "pandas>=2.2" \
