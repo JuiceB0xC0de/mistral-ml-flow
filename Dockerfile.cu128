@@ -95,8 +95,8 @@ RUN chmod +x /usr/local/bin/start.sh \
 RUN python -c "import torch, flash_attn, transformers, numpy, orjson, sklearn; \
       from transformers import AutoConfig; \
       AutoConfig.for_model('qwen3_5'); AutoConfig.for_model('mistral3'); \
-      import pynvml; pynvml.nvmlInit(); print('pynvml OK'); \
-      import b2sdk; print('b2sdk OK'); \
+      import pynvml; print('pynvml', pynvml.__version__); \
+      import b2sdk; print('b2sdk', b2sdk.__version__); \
       print('torch', torch.__version__); \
       print('flash-attn', flash_attn.__version__); \
       print('transformers', transformers.__version__); \
