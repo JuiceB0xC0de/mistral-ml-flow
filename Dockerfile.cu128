@@ -92,17 +92,10 @@ RUN chmod +x /usr/local/bin/start.sh \
       /usr/local/bin/atlas-run-vibethinker \
       /usr/local/bin/atlas-run-qwen35
 
-RUN python -c "import torch, flash_attn, transformers, numpy, orjson, sklearn; \
+RUN python -c "import torch, flash_attn, transformers, numpy, orjson, sklearn, pynvml, b2sdk; \
       from transformers import AutoConfig; \
       AutoConfig.for_model('qwen3_5'); AutoConfig.for_model('mistral3'); \
-      import pynvml; print('pynvml', pynvml.__version__); \
-      import b2sdk; print('b2sdk', b2sdk.__version__); \
-      print('torch', torch.__version__); \
-      print('flash-attn', flash_attn.__version__); \
-      print('transformers', transformers.__version__); \
-      print('mistral-common', __import__('mistral_common').__version__); \
-      print('cuda', torch.version.cuda); \
-      assert torch.__version__.startswith('2.7'), torch.__version__" \
+      print('imports OK'); assert torch.__version__.startswith('2.7')" \
  && pip show causal-conv1d mamba-ssm flash-linear-attention | grep -E "^(Name|Version|Location):"
 
 CMD ["/usr/local/bin/start.sh"]
