@@ -46,6 +46,13 @@ RUN pip install --no-build-isolation \
       "https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.6.2.post1/causal_conv1d-1.6.2.post1+cu12torch2.7cxx11abiTRUE-cp311-cp311-linux_x86_64.whl" \
       "https://github.com/state-spaces/mamba/releases/download/v2.3.0/mamba_ssm-2.3.0+cu12torch2.7cxx11abiTRUE-cp311-cp311-linux_x86_64.whl"
 
+# flash-linear-attention (FLA) for Qwen3.5's native fast linear/delta-net path.
+# FLA v0.5.0+ ships on PyPI; [cuda] extras pull the CUDA backend. Pin triton
+# to the version FLA expects for torch 2.7.0 to avoid runtime symbol mismatches.
+RUN pip install --no-build-isolation \
+      "triton==3.3.0" \
+      "flash-linear-attention[cuda]"
+
 RUN pip install \
       "numpy==1.26.4" \
       "mistral-common==1.11.4" \
@@ -91,6 +98,6 @@ RUN python -c "import torch, flash_attn, transformers, numpy, orjson, sklearn; \
       print('mistral-common', __import__('mistral_common').__version__); \
       print('cuda', torch.version.cuda); \
       assert torch.__version__.startswith('2.7'), torch.__version__" \
- && pip show causal-conv1d mamba-ssm | grep -E "^(Name|Version|Location):"
+ && pip show causal-conv1d mamba-ssm flash-linear-attention | grep -E "^(Name|Version|Location):"
 
 CMD ["/usr/local/bin/start.sh"]
