@@ -1,26 +1,31 @@
-name: Build & Push Atlas ML Image
+name: Build & Push Atlas ML Images
 
-# Builds the CUDA 13 atlas image (Mistral3 + Qwen3.5) and pushes it to Docker Hub.
-# Anchor: Python 3.13, torch 2.12.1 cu130, flash-attn 2.8.3, transformers 5.2.0.
-# Image: juiceboxdocks/ml-workflow-image (public). Requires repo secrets
+# Builds CUDA 13 and CUDA 12.8 atlas images for Mistral3 + Qwen3.5 workloads
+# and pushes them to Docker Hub.
+# Images: juiceboxdocks/ml-workflow-image (public). Requires repo secrets
 # DOCKERHUB_USERNAME and DOCKERHUB_TOKEN.
+#
+# Variants:
+#   cu130  - Python 3.10, torch 2.11.0 cu130, xIELU/FLA/causal-conv1d from source
+#   cu128  - Python 3.11, torch 2.7.0 cu128, prebuilt flash-attn/causal-conv1d/mamba-ssm
 
 on:
   push:
     branches: [main]
     paths:
       - 'Dockerfile'
+      - 'Dockerfile.cu128'
       - 'scripts/**'
       - '.github/workflows/docker.yml'
   workflow_dispatch:
 
 jobs:
-  build:
+  build-cu130:
+    name: Build & push cu130
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # The CUDA 13 devel image is large; reclaim runner disk before building.
       - name: Free disk space
         uses: jlumbroso/free-disk-space@main
         with:
@@ -41,13 +46,63 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile
           push: true
-          # Image is CUDA 13.0 -> tag cu130. py313-torch212 pins the exact
-          # Python/torch anchor. 'latest' tracks the newest build.
           tags: |
-            juiceboxdocks/ml-workflow-image:latest
             juiceboxdocks/ml-workflow-image:cu130
-            juiceboxdocks/ml-workflow-image:py313-torch212
-          # No gha cache: mode=max ~doubles peak disk by materializing every
-          # layer for export, which OOM'd the runner on this ~20GB CUDA image.
+            juiceboxdocks/ml-workflow-image:py310-torch211
           provenance: false
+
+  build-cu128:
+    name: Build & push cu128
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.cu128
+          push: true
+          tags: |
+            juiceboxdocks/ml-workflow-image:cu128
+            juiceboxdocks/ml-workflow-image:py311-torch27
+          provenance: false
+
+  # Publish a latest tag once both variants have been pushed. This keeps the
+  # default tag stable; update the needs dependency to change which variant is
+  # treated as the primary image.
+  tag-latest:
+    name: Tag latest as cu128
+    needs: [build-cu128]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tag cu128 as latest
+        run: |
+          docker buildx imagetools create \
+            --tag juiceboxdocks/ml-workflow-image:latest \
+            juiceboxdocks/ml-workflow-image:cu128

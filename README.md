@@ -1,17 +1,18 @@
 # mistral-ml-flow
 
-Single-purpose NVIDIA GPU image for running the GWIQ **Mistral atlas** CLI from a
+Single-purpose NVIDIA GPU image for running the GWIQ **Mistral/Qwen atlas** CLI from a
 RunPod pod or any Docker host.
 
 This is a CLI-first CUDA 13 runtime, not an "install every ML tool" workstation.
-It ships a clean Python/PyTorch stack with a prebuilt FlashAttention wheel and a
-source-built xIELU extension, plus `mistral-common` for Mistral/Ministral models.
-The atlas app itself is cloned into the container at runtime from a Hugging Face
-Space — it is not baked into the image.
+It ships a clean Python/PyTorch stack with a prebuilt FlashAttention wheel and
+source-built xIELU, `causal-conv1d`, and `flash-linear-attention` extensions,
+plus `mistral-common` for Mistral/Ministral models. The atlas app itself is
+cloned into the container at runtime from a Hugging Face Space — it is not
+baked into the image.
 
 - **Image:** `juiceboxdocks/ml-workflow-image`
 - **Tags:** `latest`, `cu130` (current), `cu128` (legacy alias → same CUDA 13 image)
-- **Default model:** `mistralai/Ministral-3-3B-Base-2512`
+- **Default models:** `mistralai/Ministral-3-3B-Base-2512`, `Qwen/Qwen3.5-3B`
 
 ## Quick Start
 
@@ -72,8 +73,9 @@ All live on `PATH` inside the container.
 | Command | What it does |
 |---|---|
 | `start.sh` | Default entrypoint. Prints runtime versions (python, torch, flash-attn, xielu, CUDA) and stays alive (`tail -f /dev/null`). |
-| `atlas-clone [src] [dst]` | Clones/refreshes the atlas app. Defaults: `https://huggingface.co/spaces/juiceb0xc0de/mistral-atlasing` → `/workspace/mistral-atlasing`. Uses `HF_TOKEN` for private/gated Spaces. |
-| `atlas-run-ministral [args]` | Default Ministral-3-3B scan (see above). Extra args pass through to `app.py`. |
+| `atlas-clone [src] [dst]` | Clones/refreshes the atlas app. Defaults: `https://huggingface.co/spaces/juiceb0xc0de/atlasing` → `/workspace/atlasing`. Uses `HF_TOKEN` for private/gated Spaces. |
+| `atlas-run-ministral [args]` | Default Ministral-3-3B scan. Extra args pass through to `app.py`. |
+| `atlas-run-qwen35 [args]` | Qwen 3.5-family scan with A5000-safe defaults (`batch-size 1`). Extra args pass through. |
 | `atlas-run-vibethinker [args]` | Same harness against `WeiboAI/VibeThinker-3B`. |
 | `sync_pools push\|pull <layer> [bucket]` | Backblaze B2 sync of SAE pool batches (layer-1, layer, layer+1). Requires `rclone` plus `B2_ACCOUNT` / `B2_KEY` / `B2_BUCKET`. **`rclone` is not in the image — install it on the pod before using.** |
 

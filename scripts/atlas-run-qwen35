@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${ATLAS_APP_DIR:-/workspace/atlasing}"
+
+if [ ! -f "${APP_DIR}/app.py" ]; then
+  echo "[atlas-run-qwen35] ${APP_DIR}/app.py not found. Run atlas-clone first." >&2
+  exit 1
+fi
+
+exec python "${APP_DIR}/app.py" \
+  --model "${ATLAS_MODEL_ID:-Qwen/Qwen3.5-3B}" \
+  --corpus "${ATLAS_CORPUS:-${APP_DIR}/prompts/prompts_balanced.jsonl}" \
+  --outdir "${ATLAS_OUTDIR:-/workspace/outputs/qwen35-census}" \
+  --atlas "${ATLAS_DB_DIR:-/workspace/atlas/qwen35}" \
+  --batch-size "${ATLAS_BATCH_SIZE:-1}" \
+  --max-length "${ATLAS_MAX_LENGTH:-128}" \
+  --components "${ATLAS_COMPONENTS:-mlp,gate,up}" \
+  --dtype bfloat16 \
+  --trust-remote \
+  --attn-implementation flash_attention_2 \
+  "$@"
