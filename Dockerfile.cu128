@@ -78,7 +78,7 @@ RUN pip install \
       "wrapt==2.2.2" \
       "Deprecated==1.3.1" \
       "nvidia-ml-py>=12.560" \
-      "b2cli>=1.4.0"
+      "b2sdk>=2.0.0"
 
 # Bleeding-edge transformers is required for Qwen3.5-family models such as
 # allenai/tmax-2b and allenai/tmax-27b. Pinning a release version breaks loading.
@@ -96,7 +96,7 @@ RUN python -c "import torch, flash_attn, transformers, numpy, orjson, sklearn; \
       from transformers import AutoConfig; \
       AutoConfig.for_model('qwen3_5'); AutoConfig.for_model('mistral3'); \
       import pynvml; pynvml.nvmlInit(); print('pynvml OK'); \
-      import b2sdk; print('b2cli OK'); \
+      import b2sdk; print('b2sdk OK'); \
       print('torch', torch.__version__); \
       print('flash-attn', flash_attn.__version__); \
       print('transformers', transformers.__version__); \
