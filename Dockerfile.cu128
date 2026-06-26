@@ -82,16 +82,15 @@ RUN chmod +x /usr/local/bin/start.sh \
       /usr/local/bin/atlas-run-vibethinker \
       /usr/local/bin/atlas-run-qwen35
 
-RUN python -c "import torch, flash_attn, transformers, numpy, orjson, sklearn, causal_conv1d, mamba_ssm; \
+RUN python -c "import torch, flash_attn, transformers, numpy, orjson, sklearn; \
       from transformers import AutoConfig; \
       AutoConfig.for_model('qwen3_5'); AutoConfig.for_model('mistral3'); \
       print('torch', torch.__version__); \
       print('flash-attn', flash_attn.__version__); \
-      print('causal-conv1d', getattr(causal_conv1d, '__version__', 'unknown')); \
-      print('mamba-ssm', getattr(mamba_ssm, '__version__', 'unknown')); \
       print('transformers', transformers.__version__); \
       print('mistral-common', __import__('mistral_common').__version__); \
-      print('cuda', torch.version.cuda, torch.cuda.is_available()); \
-      assert torch.__version__.startswith('2.7'), torch.__version__"
+      print('cuda', torch.version.cuda); \
+      assert torch.__version__.startswith('2.7'), torch.__version__" \
+ && pip show causal-conv1d mamba-ssm | grep -E "^(Name|Version|Location):"
 
 CMD ["/usr/local/bin/start.sh"]
