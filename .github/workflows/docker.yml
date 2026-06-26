@@ -1,58 +1,23 @@
 name: Build & Push Atlas ML Images
 
-# Builds CUDA 13 and CUDA 12.8 atlas images for Mistral3 + Qwen3.5 workloads
-# and pushes them to Docker Hub.
-# Images: juiceboxdocks/ml-workflow-image (public). Requires repo secrets
+# Builds the CUDA 12.8 atlas image for Mistral3 + Qwen3.5 workloads
+# and pushes it to Docker Hub.
+# Image: juiceboxdocks/ml-workflow-image (public). Requires repo secrets
 # DOCKERHUB_USERNAME and DOCKERHUB_TOKEN.
 #
-# Variants:
-#   cu130  - Python 3.10, torch 2.11.0 cu130, xIELU/FLA/causal-conv1d from source
+# Variant:
 #   cu128  - Python 3.11, torch 2.7.0 cu128, prebuilt flash-attn/causal-conv1d/mamba-ssm
 
 on:
   push:
     branches: [main]
     paths:
-      - 'Dockerfile'
       - 'Dockerfile.cu128'
       - 'scripts/**'
       - '.github/workflows/docker.yml'
   workflow_dispatch:
 
 jobs:
-  build-cu130:
-    name: Build & push cu130
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          swap-storage: true
-
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
-            juiceboxdocks/ml-workflow-image:cu130
-            juiceboxdocks/ml-workflow-image:py310-torch211
-          provenance: false
-
   build-cu128:
     name: Build & push cu128
     runs-on: ubuntu-latest
@@ -86,9 +51,7 @@ jobs:
             juiceboxdocks/ml-workflow-image:py311-torch27
           provenance: false
 
-  # Publish a latest tag once both variants have been pushed. This keeps the
-  # default tag stable; update the needs dependency to change which variant is
-  # treated as the primary image.
+  # Publish a latest tag once the cu128 variant has been pushed.
   tag-latest:
     name: Tag latest as cu128
     needs: [build-cu128]
